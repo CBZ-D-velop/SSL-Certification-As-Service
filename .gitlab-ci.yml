@@ -1,0 +1,76 @@
+# You can override the included template(s) by including variable overrides
+# SAST customization: https://docs.gitlab.com/ee/user/application_security/sast/#customizing-the-sast-settings
+# Secret Detection customization: https://docs.gitlab.com/ee/user/application_security/secret_detection/#customizing-settings
+# Dependency Scanning customization: https://docs.gitlab.com/ee/user/application_security/dependency_scanning/#customizing-the-dependency-scanning-settings
+# Container Scanning customization: https://docs.gitlab.com/ee/user/application_security/container_scanning/#customizing-the-container-scanning-settings
+# Note that environment variables can be set in several places
+# See https://docs.gitlab.com/ee/ci/variables/#cicd-variable-precedence
+
+stages:
+- gitlab-test
+- lint
+- build_testing
+
+variables:
+  PIPELINE_SCENARIO_NAME: "gitlabci"
+
+###############################################################################
+#################### actions
+###############################################################################
+
+# To start, we need to lint role's files with a YML vision
+# Because if one of the files doesn't respect YML conventions,
+# we dont need to test rest of the pipeline
+.lint: &lint
+  stage: lint
+  image: $DOCKER_NEXUS_ADDRESS/$DOCKER_IMAGE_DEBIAN_ANSIBLE
+  script:
+    - yamllint -c ./.yamllint $path/*.yml
+    - ansible-lint --config=./.ansible-lint ./$path/*
+  allow_failure: false
+  retry: 2
+
+# We will build and run each tools with the input.yml file
+.build_and_test: &build_and_test
+  stage: build_testing
+  image: $DOCKER_NEXUS_ADDRESS/$DOCKER_IMAGE_DEBIAN_ANSIBLE
+  script:
+    - ./build
+    - cd $path
+    - ./$binary
+  allow_failure: false
+  retry: 2
+
+###############################################################################
+#################### CI JOBS
+###############################################################################
+
+############################################
+#### gitlab-test
+############################################
+
+# As a GitLab ci, we use the default template :)
+sast:
+  stage: gitlab-test
+include:
+- template: Security/SAST.gitlab-ci.yml
+  allow_failure: false
+
+############################################
+#### lint
+############################################
+
+lint_input:
+  <<: *lint
+  variables:
+    path: "./bin/input.yml"
+
+#############################################
+##### build and test
+#############################################
+
+build_bootstrap_ssl_files:
+  <<: *build_and_test
+  variables:
+    path: "./bin"
+    binary: "certifications"
