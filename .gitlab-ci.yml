@@ -23,7 +23,7 @@ variables:
 # we dont need to test rest of the pipeline
 .lint: &lint
   stage: lint
-  image: $DOCKER_NEXUS_ADDRESS/$DOCKER_IMAGE_DEBIAN_ANSIBLE
+  image: $NEXUS_ADDRESS/$DOCKER_IMAGE_YAML_LINT
   script:
     - yamllint -c ./.yamllint $path/*.yml
     - ansible-lint --config=./.ansible-lint ./$path/*
@@ -33,7 +33,7 @@ variables:
 # We will build and run each tools with the input.yml file
 .build_and_test: &build_and_test
   stage: build_testing
-  image: $DOCKER_NEXUS_ADDRESS/$DOCKER_IMAGE_DEBIAN_ANSIBLE
+  image: $NEXUS_ADDRESS/$DOCKER_IMAGE_DEBIAN_11_ANSIBLE
   script:
     - ./build
     - cd $path
