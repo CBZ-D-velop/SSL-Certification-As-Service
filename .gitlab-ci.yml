@@ -8,7 +8,8 @@
 
 stages:
 - gitlab-test
-- lint
+- yaml-lint
+- ansible-lint
 - build_testing
 
 variables:
@@ -21,19 +22,34 @@ variables:
 # To start, we need to lint role's files with a YML vision
 # Because if one of the files doesn't respect YML conventions,
 # we dont need to test rest of the pipeline
-.lint: &lint
-  stage: lint
-  image: $DOCKER_NEXUS_ADDRESS/$DOCKER_IMAGE_DEBIAN_ANSIBLE
+.yaml_lint: &yaml_lint
+  stage: yaml-lint
+  image: $NEXUS_ADDRESS/$DOCKER_IMAGE_YAML_LINT
+  before_script:
+    # Fix weird ansible bug: https://github.com/trailofbits/algo/issues/1637
+    # This probably happens due to gitlab-runner mounting the git repo into the container
+    - "chmod o-w ."
   script:
-    - yamllint -c ./.yamllint $path/*.yml
-    - ansible-lint --config=./.ansible-lint ./$path/*
+    - yamllint -c ./.yamllint $path # Here mains files
+  allow_failure: false
+  retry: 2
+
+.ansible_lint: &ansible_lint
+  stage: ansible-lint
+  image: $NEXUS_ADDRESS/$DOCKER_IMAGE_ANSIBLE_LINT
+  before_script:
+    # Fix weird ansible bug: https://github.com/trailofbits/algo/issues/1637
+    # This probably happens due to gitlab-runner mounting the git repo into the container
+    - "chmod o-w ."
+  script:
+    - ansible-lint --config=./.ansible-lint --exclude molecule --exclude tests ./*
   allow_failure: false
   retry: 2
 
 # We will build and run each tools with the input.yml file
 .build_and_test: &build_and_test
   stage: build_testing
-  image: $DOCKER_NEXUS_ADDRESS/$DOCKER_IMAGE_DEBIAN_ANSIBLE
+  image: $NEXUS_ADDRESS/$DOCKER_IMAGE_DEBIAN_11_ANSIBLE
   script:
     - ./build
     - cd $path
@@ -60,10 +76,19 @@ include:
 #### lint
 ############################################
 
-lint_input:
-  <<: *lint
+yml_lint_input:
+  <<: *yaml_lint
   variables:
     path: "./bin/input.yml"
+
+############################################
+#### ansible-lint
+############################################
+
+ansible_lint:
+  <<: *ansible_lint
+  needs:
+    - "yml_lint_input"
 
 #############################################
 ##### build and test
@@ -74,3 +99,5 @@ build_bootstrap_ssl_files:
   variables:
     path: "./bin"
     binary: "certifications"
+  needs:
+    - "ansible_lint"
