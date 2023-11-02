@@ -1,4 +1,4 @@
-# SSL-Certification-Service
+# SSL-Certification-As-Service
 
 ![Licence Status](https://img.shields.io/badge/licence-MIT-brightgreen)
 ![CI Status](https://img.shields.io/badge/CI-success-brightgreen)
