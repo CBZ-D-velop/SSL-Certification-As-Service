@@ -1,27 +1,26 @@
 #!/bin/bash
+cd ./../
+source .env || exit
+source "./${GPG_KEY}" || exit
 
-# Uncypher all input files with Ansible
-for input_ca_dir in ./../inputs/*; do
-    if [ -d "$input_ca_dir" ]; then
-        if [ -d "$input_ca_dir" ]; then
-            pushd "$input_ca_dir" >/dev/null
-            [ -f "./input.yml" ] && ansible-vault decrypt ./input.yml --vault-password-file ./../../.vault.key
-            popd >/dev/null
-        fi
+# UNENCRYPT ALL INPUT FILES WITH ANSIBLE VAULT
+for INPUT_CA_DIR in ./${CA_INPUT_FOLDER}/*; do
+    if [ -d "./${INPUT_CA_DIR}" ]; then
+        [ -f "${INPUT_CA_DIR}/${CA_INPUT_FILE}" ] && ansible-vault decrypt ${INPUT_CA_DIR}/${CA_INPUT_FILE} --vault-password-file ./${ANSIBLE_VAULT_KEY}
     fi
 done
 
-# Unypher all input files with GPG
-source ./../.pgp.key
-for ssl_dir in ./../ssl/*; do
-    if [ -d "${ssl_dir}" ]; then
-        for private in "${ssl_dir}"/private/*; do
-            if [ -f "${private}" ]; then
-                if [ "${private: -4}" == ".gpg" ]; then
-                filename=$(basename "$private" .gpg)
-                gpg --batch --passphrase ${CYPHER_PASS} -o "${ssl_dir}/private/$filename" -d ${private} && rm ${private}
+# UNENCRYPT ALL INPUT FILES WITH GPG
+for CURRENT_SSL_FOLDER in ./${SSL_FOLDER}/*; do
+    if [ -d "${CURRENT_SSL_FOLDER}" ]; then
+        for PRIVATE in ${CURRENT_SSL_FOLDER}/private/*; do
+            if [ -f "${PRIVATE}" ]; then
+                if [ "${PRIVATE: -4}" == ".gpg" ] || [[ "${PRIVATE}" == *"lock"* ]]; then
+                    OUTPUT=$(basename "${PRIVATE}" .gpg)
+                    gpg --batch --passphrase ${CYPHER_PASS} -o "${CURRENT_SSL_FOLDER}/private/$OUTPUT" -d "${PRIVATE}" && rm "${PRIVATE}"
+                    echo "UNENCRYPTION: DONE: ${PRIVATE}"
                 else
-                echo "Uncypher: already done: ${private}"
+                    echo "UNENCRYPTION: ALREADY DONE: ${PRIVATE}"
                 fi
             fi
         done

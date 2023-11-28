@@ -1,3 +1,5 @@
 #!/bin/bash
+sudo source ./../../.env
+#
 sudo ansible-playbook -i ./hosts -e "@./input.yml" ./../../Ansible/playbook.bootstrap_ssl_files/playbook.yml --vault-password-file ./../../.vault.key
 sudo chmod 777 -R ./../../*
