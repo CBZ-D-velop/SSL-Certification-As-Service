@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Decrypt all input files
+# Decrypt all input files with Ansible
 for input_ca_dir in ./../inputs/*; do
     if [ -d "$input_ca_dir" ]; then
         if [ -d "$input_ca_dir" ]; then

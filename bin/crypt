@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Crypt all input files
+# Crypt all input files with Ansible
 for input_ca_dir in ./../inputs/*; do
     if [ -d "$input_ca_dir" ]; then
         if [ -d "$input_ca_dir" ]; then
