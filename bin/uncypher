@@ -1,0 +1,29 @@
+#!/bin/bash
+
+# Uncypher all input files with Ansible
+for input_ca_dir in ./../inputs/*; do
+    if [ -d "$input_ca_dir" ]; then
+        if [ -d "$input_ca_dir" ]; then
+            pushd "$input_ca_dir" >/dev/null
+            [ -f "./input.yml" ] && ansible-vault decrypt ./input.yml --vault-password-file ./../../.vault.key
+            popd >/dev/null
+        fi
+    fi
+done
+
+# Unypher all input files with GPG
+source ./../.pgp.key
+for ssl_dir in ./../ssl/*; do
+    if [ -d "${ssl_dir}" ]; then
+        for private in "${ssl_dir}"/private/*; do
+            if [ -f "${private}" ]; then
+                if [ "${private: -4}" == ".gpg" ]; then
+                filename=$(basename "$private" .gpg)
+                gpg --batch --passphrase ${CYPHER_PASS} -o "${ssl_dir}/private/$filename" -d ${private} && rm ${private}
+                else
+                echo "Uncypher: already done: ${private}"
+                fi
+            fi
+        done
+    fi
+done

@@ -1,13 +1,12 @@
 #!/bin/bash
 
 # Add a file in all ssl folder, to be gitted
-for CA_dir in ./../ssl/*; do
-    if [ -d "$CA_dir" ]; then
-        for ca_content_dir in "$CA_dir"/*; do
-            if [ -d "$ca_content_dir" ]; then
-                echo "fill: Added in $ca_content_dir/empty.lock"
-                touch "$ca_content_dir/empty.lock"
-                echo "JUST FOR GIT" > "$ca_content_dir/empty.lock"
+for ssl_dir in ./../ssl/*; do
+    if [ -d "$ssl_dir" ]; then
+        for sub_ssl_fir in "$ssl_dir"/*; do
+            if [ -d "$sub_ssl_fir" ]; then
+                echo "fill: Added in $sub_ssl_fir/empty.lock"
+                echo "JUST FOR GIT" > "$sub_ssl_fir/empty.lock"
             fi
         done
     fi
