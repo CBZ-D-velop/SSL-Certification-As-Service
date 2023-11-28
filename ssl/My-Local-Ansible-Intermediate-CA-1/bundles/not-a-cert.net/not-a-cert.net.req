@@ -1,0 +1,29 @@
+##############################
+#                            #
+# Ansible / Tower managed on #
+#                            #
+##############################
+
+.include ./../../ssl/My-Local-Ansible-Intermediate-CA-1/openssl.cnf
+
+[ req ]
+default_bits=4096
+prompt=no
+req_extensions=req_ext
+distinguished_name=dn
+#
+[ dn ]
+C=FR
+ST=state
+L=city
+O=Local Ansible
+OU=My Local Ansible Intermediate CA 1
+emailAddress=administrateur@labo-cbz.net
+CN=not-a-cert.net
+#
+[ req_ext ]
+subjectAltName=@alt_names
+#
+[ alt_names ]
+DNS.1=not-a-cert.net
+DNS.2=255.255.255.255

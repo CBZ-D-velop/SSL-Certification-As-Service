@@ -10,7 +10,7 @@ stages:
 - gitlab-test
 - yaml-lint
 - ansible-lint
-- build_testing
+- certifications
 
 variables:
   PIPELINE_SCENARIO_NAME: "gitlabci"
@@ -41,19 +41,21 @@ variables:
     # Fix weird ansible bug: https://github.com/trailofbits/algo/issues/1637
     # This probably happens due to gitlab-runner mounting the git repo into the container
     - "chmod o-w ."
+    - "cp .ansible.cfg ~/"
   script:
     - ansible-lint --config=./.ansible-lint --exclude molecule --exclude tests ./*
   allow_failure: false
   retry: 2
 
 # We will build and run each tools with the input.yml file
-.build_and_test: &build_and_test
-  stage: build_testing
+.certifications: &certifications
+  stage: certifications
   image: $NEXUS_ADDRESS/$DOCKER_IMAGE_DEBIAN_11_ANSIBLE
   script:
-    - ./build
-    - cd $path
-    - ./$binary
+    - "cp .ansible.cfg ~/"
+    - " cd ./bin && ./build"
+    - "cd $path"
+    - "./run"
   allow_failure: false
   retry: 2
 
@@ -89,15 +91,3 @@ ansible_lint:
   <<: *ansible_lint
   needs:
     - "yml_lint_input"
-
-#############################################
-##### build and test
-#############################################
-
-build_bootstrap_ssl_files:
-  <<: *build_and_test
-  variables:
-    path: "./bin"
-    binary: "certifications"
-  needs:
-    - "ansible_lint"

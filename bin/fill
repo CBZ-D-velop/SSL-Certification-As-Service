@@ -1,0 +1,14 @@
+#!/bin/bash
+
+# Parcours des dossiers dans ./Certifications
+for CA_dir in ./../ssl/*; do
+    if [ -d "$CA_dir" ]; then
+        for ca_content_dir in "$CA_dir"/*; do
+            if [ -d "$ca_content_dir" ]; then
+                echo "fill: Added in $ca_content_dir/empty.lock"
+                touch "$ca_content_dir/empty.lock"
+                echo "JUST FOR GIT" > "$ca_content_dir/empty.lock"
+            fi
+        done
+    fi
+done
