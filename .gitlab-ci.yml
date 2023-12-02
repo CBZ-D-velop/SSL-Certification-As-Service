@@ -97,28 +97,28 @@ ansible_lint:
 
 certification_My-Local-Ansible-Root-CA:
   <<: *certification
-  vars:
+  variables:
     CA: "My-Local-Ansible-Root-CA"
   needs:
     - "ansible_lint"
 
 certification_My-Local-Ansible-Intermediate-CA-1:
   <<: *certification
-  vars:
+  variables:
     CA: "My-Local-Ansible-Intermediate-CA-1"
   needs:
     - "ansible_lint"
 
 certification_My-Local-Ansible-Intermediate-CA-2:
   <<: *certification
-  vars:
+  variables:
     CA: "My-Local-Ansible-Intermediate-CA-2"
   needs:
     - "ansible_lint"
 
 certification_My-Local-Ansible-Service-1-CA:
   <<: *certification
-  vars:
+  variables:
     CA: "My-Local-Ansible-Service-1-CA"
   needs:
     - "ansible_lint"
