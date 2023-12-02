@@ -30,7 +30,7 @@ variables:
     # This probably happens due to gitlab-runner mounting the git repo into the container
     - "chmod o-w ."
   script:
-    - yamllint -c ./.yamllint $path # Here mains files
+    - yamllint -c ./.yamllint .
   allow_failure: false
   retry: 2
 
@@ -43,18 +43,19 @@ variables:
     - "chmod o-w ."
     - "cp .ansible.cfg ~/"
   script:
-    - ansible-lint --config=./.ansible-lint --exclude molecule --exclude tests ./*
+    - ansible-lint --config=./.ansible-lint --exclude molecule --exclude tests .
   allow_failure: false
   retry: 2
 
 # We will build and run each tools with the input.yml file
-.certifications: &certifications
+.certification: &certification
   stage: certifications
   image: $NEXUS_ADDRESS/$DOCKER_IMAGE_DEBIAN_11_ANSIBLE
   script:
     - "cp .ansible.cfg ~/"
-    - " cd ./bin && ./build"
-    - "cd $path"
+    - " cd ./bin && ./build && cd .."
+    - " cd ./bin && ./uncypher && cd .."
+    - " cd ./$CA_INPUT_FOLDER/$CA"
     - "./run"
   allow_failure: false
   retry: 2
@@ -78,10 +79,8 @@ include:
 #### lint
 ############################################
 
-yml_lint_input:
+yml_lint:
   <<: *yaml_lint
-  variables:
-    path: "./bin/input.yml"
 
 ############################################
 #### ansible-lint
@@ -91,3 +90,35 @@ ansible_lint:
   <<: *ansible_lint
   needs:
     - "yml_lint_input"
+
+############################################
+#### certifications
+############################################
+
+certification_My-Local-Ansible-Root-CA:
+  <<: *certification
+  vars:
+    CA: "My-Local-Ansible-Root-CA"
+  needs:
+    - "ansible_lint"
+
+certification_My-Local-Ansible-Intermediate-CA-1:
+  <<: *certification
+  vars:
+    CA: "My-Local-Ansible-Intermediate-CA-1"
+  needs:
+    - "ansible_lint"
+
+certification_My-Local-Ansible-Intermediate-CA-2:
+  <<: *certification
+  vars:
+    CA: "My-Local-Ansible-Intermediate-CA-2"
+  needs:
+    - "ansible_lint"
+
+certification_My-Local-Ansible-Service-1-CA:
+  <<: *certification
+  vars:
+    CA: "My-Local-Ansible-Service-1-CA"
+  needs:
+    - "ansible_lint"
