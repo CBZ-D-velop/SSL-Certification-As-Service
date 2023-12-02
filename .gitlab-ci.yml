@@ -53,6 +53,8 @@ variables:
   image: $NEXUS_ADDRESS/$DOCKER_IMAGE_DEBIAN_11_ANSIBLE
   script:
     - "cp .ansible.cfg ~/"
+    - "echo \"CYPHER_PASS=$GPG_KEY\" > .gpg.key
+    - "echo \"$VAULT_KEY\" > .vault.key
     - " cd ./bin && ./build && cd .."
     - " cd ./bin && ./uncypher && cd .."
     - " cd ./$CA_INPUT_FOLDER/$CA"
@@ -89,7 +91,7 @@ yml_lint:
 ansible_lint:
   <<: *ansible_lint
   needs:
-    - "yml_lint_input"
+    - "yml_lint"
 
 ############################################
 #### certifications
