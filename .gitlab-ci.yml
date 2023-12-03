@@ -50,14 +50,14 @@ variables:
 # We will build and run each tools with the input.yml file
 .certification: &certification
   stage: certifications
-  image: $NEXUS_ADDRESS/$DOCKER_IMAGE_DEBIAN_11_ANSIBLE
+  image: $NEXUS_ADDRESS/$DOCKER_IMAGE_DOCKER_MOLECULE
   script:
     - "cp .ansible.cfg ~/"
     - "echo \"CYPHER_PASS=$GPG_KEY\" > .gpg.key"
     - "echo \"$VAULT_KEY\" > .vault.key"
     - " cd ./bin && ./build && cd .."
     - " cd ./bin && ./uncypher && cd .."
-    - " cd ./$CA_INPUT_FOLDER/$CA"
+    - " cd $CA_INPUT_FOLDER/$CA"
     - "./run"
   allow_failure: false
   retry: 2
