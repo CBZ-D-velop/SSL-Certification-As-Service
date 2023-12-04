@@ -51,6 +51,13 @@ variables:
 .certification: &certification
   stage: certifications
   image: $NEXUS_ADDRESS/$DOCKER_IMAGE_ANSIBLE_11_CERTIFICATION
+  before_script:
+    # Fix weird ansible bug: https://github.com/trailofbits/algo/issues/1637
+    # This probably happens due to gitlab-runner mounting the git repo into the container
+    - "chmod o-w ."
+    - "cp .ansible.cfg ~/"
+    - "echo \"127.0.0.1   $(hostname)\" >> /etc/hosts"
+    - "echo \"127.0.0.1   localhost\" >> /etc/hosts"
   script:
     - "cp .ansible.cfg ~/"
     - "echo \"CYPHER_PASS=$GPG_KEY\" > .gpg.key"
