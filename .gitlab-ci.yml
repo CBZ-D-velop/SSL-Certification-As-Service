@@ -59,6 +59,7 @@ variables:
     - "echo \"127.0.0.1   $(hostname)\" >> /etc/hosts"
     - "echo \"127.0.0.1   localhost\" >> /etc/hosts"
   script:
+    - "git --version"
     - "cp .ansible.cfg ~/"
     - "echo \"CYPHER_PASS=$GPG_KEY\" > .gpg.key"
     - "echo \"$VAULT_KEY\" > .vault.key"
