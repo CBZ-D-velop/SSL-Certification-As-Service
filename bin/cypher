@@ -1,0 +1,27 @@
+#!/bin/bash
+cd ./../
+source .env || exit
+source "./${GPG_KEY}" || exit
+
+# ENCRYPT ALL INPUT FILES WITH ANSIBLE VAULT
+for INPUT_CA_DIR in ./${CA_INPUT_FOLDER}/*; do
+    if [ -d "./${INPUT_CA_DIR}" ]; then
+        [ -f "${INPUT_CA_DIR}/${CA_INPUT_FILE}" ] && ansible-vault encrypt ${INPUT_CA_DIR}/${CA_INPUT_FILE} --vault-password-file ./${ANSIBLE_VAULT_KEY}
+    fi
+done
+
+# ENCRYPT ALL INPUT FILES WITH GPG
+for CURRENT_SSL_FOLDER in ./${SSL_FOLDER}/*; do
+    if [ -d "${CURRENT_SSL_FOLDER}" ]; then
+        for PRIVATE in ${CURRENT_SSL_FOLDER}/private/*; do
+            if [ -f "${PRIVATE}" ]; then
+                if [ "${PRIVATE: -4}" == ".gpg" ] || [[ "${PRIVATE}" == *"lock"* ]]; then
+                    echo "ENCRYPTION: ALREADY DONE: ${PRIVATE}"
+                else
+                    gpg --batch --passphrase "${CYPHER_PASS}" -c --symmetric "${PRIVATE}" && rm "${PRIVATE}"
+                    echo "ENCRYPTION: DONE: ${PRIVATE}"
+                fi
+            fi
+        done
+    fi
+done
