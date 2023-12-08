@@ -58,16 +58,24 @@ variables:
     - "cp .ansible.cfg ~/"
     - "echo \"127.0.0.1   $(hostname)\" >> /etc/hosts"
     - "echo \"127.0.0.1   localhost\" >> /etc/hosts"
+    #
+    - "echo \"CYPHER_PASS=${CICD_GPG_KEY}\" > .gpg.key"
+    - "echo \"${CICD_ANSIBLE_VAULT_KEY}\" > .vault.key"
+    #
+    - "echo \"PUSH_NEXUS_ADDRESS=${NEXUS_ADDRESS_HTTPS}\" > .nexus.env"
+    - "echo \"PUSH_NEXUS_CICD_TESTS_REPOS=${NEXUS_CICD_TESTS_REPOS}\" >> .nexus.env"
+    - "echo \"PUSH_NEXUS_URL=${NEXUS_ADDRESS_HTTPS}/repository/${NEXUS_CICD_TESTS_REPOS}\" >> .nexus.env"
+    - "echo \"PUSH_NEXUS_LOGIN=${NEXUS_REPOS_USERNAME}\" >> .nexus.env"
+    - "echo \"PUSH_NEXUS_PASSWORD=${NEXUS_REPOS_PASSWORD}\" >> .nexus.env"
+    #
+    - "cd ./bin && ./build && cd .."
+    - "cd ./bin && ./uncypher && cd .."
   script:
-    - "git --version"
-    - "cp .ansible.cfg ~/"
-    - "echo \"CYPHER_PASS=$GPG_KEY\" > .gpg.key"
-    - "echo \"$VAULT_KEY\" > .vault.key"
-    - " cd ./bin && ./build && cd .."
-    - " cd ./bin && ./uncypher && cd .."
     - "source .env"
-    - " cd $CA_INPUT_FOLDER/$CA"
-    - "./run"
+    - "cd ${CA_INPUT_FOLDER}/${CA} && ./run && cd ./../.."
+    #
+    - "source .nexus.env"
+    - "cd ./bin && ./push_ca $CA"
   allow_failure: false
   retry: 2
 
@@ -90,7 +98,7 @@ include:
 #### lint
 ############################################
 
-yml_lint:
+yaml_lint:
   <<: *yaml_lint
 
 ############################################
@@ -100,7 +108,7 @@ yml_lint:
 ansible_lint:
   <<: *ansible_lint
   needs:
-    - "yml_lint"
+    - "yaml_lint"
 
 ############################################
 #### certifications
