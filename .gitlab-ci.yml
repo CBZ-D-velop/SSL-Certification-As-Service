@@ -10,7 +10,7 @@ stages:
 - gitlab-test
 - yaml-lint
 - ansible-lint
-- build_testing
+- certifications
 
 variables:
   PIPELINE_SCENARIO_NAME: "gitlabci"
@@ -30,7 +30,7 @@ variables:
     # This probably happens due to gitlab-runner mounting the git repo into the container
     - "chmod o-w ."
   script:
-    - yamllint -c ./.yamllint $path # Here mains files
+    - yamllint -c ./.yamllint .
   allow_failure: false
   retry: 2
 
@@ -41,19 +41,41 @@ variables:
     # Fix weird ansible bug: https://github.com/trailofbits/algo/issues/1637
     # This probably happens due to gitlab-runner mounting the git repo into the container
     - "chmod o-w ."
+    - "cp .ansible.cfg ~/"
   script:
-    - ansible-lint --config=./.ansible-lint --exclude molecule --exclude tests ./*
+    - ansible-lint --config=./.ansible-lint --exclude molecule --exclude tests .
   allow_failure: false
   retry: 2
 
 # We will build and run each tools with the input.yml file
-.build_and_test: &build_and_test
-  stage: build_testing
-  image: $NEXUS_ADDRESS/$DOCKER_IMAGE_DEBIAN_11_ANSIBLE
+.certification: &certification
+  stage: certifications
+  image: $NEXUS_ADDRESS/$DOCKER_IMAGE_ANSIBLE_11_CERTIFICATION
+  before_script:
+    # Fix weird ansible bug: https://github.com/trailofbits/algo/issues/1637
+    # This probably happens due to gitlab-runner mounting the git repo into the container
+    - "chmod o-w ."
+    - "cp .ansible.cfg ~/"
+    - "echo \"127.0.0.1   $(hostname)\" >> /etc/hosts"
+    - "echo \"127.0.0.1   localhost\" >> /etc/hosts"
+    #
+    - "echo \"CYPHER_PASS=${CICD_GPG_KEY}\" > .gpg.key"
+    - "echo \"${CICD_ANSIBLE_VAULT_KEY}\" > .vault.key"
+    #
+    - "echo \"PUSH_NEXUS_ADDRESS=${NEXUS_ADDRESS_HTTPS}\" > .nexus.env"
+    - "echo \"PUSH_NEXUS_CICD_TESTS_REPOS=${NEXUS_CICD_TESTS_REPOS}\" >> .nexus.env"
+    - "echo \"PUSH_NEXUS_URL=${NEXUS_ADDRESS_HTTPS}/repository/${NEXUS_CICD_TESTS_REPOS}\" >> .nexus.env"
+    - "echo \"PUSH_NEXUS_LOGIN=${NEXUS_REPOS_USERNAME}\" >> .nexus.env"
+    - "echo \"PUSH_NEXUS_PASSWORD=${NEXUS_REPOS_PASSWORD}\" >> .nexus.env"
+    #
+    - "cd ./bin && ./build && cd .."
+    - "cd ./bin && ./uncypher && cd .."
   script:
-    - ./build
-    - cd $path
-    - ./$binary
+    - "source .env"
+    - "cd ${CA_INPUT_FOLDER}/${CA} && ./run && cd ./../.."
+    #
+    - "source .nexus.env"
+    - "cd ./bin && ./push_ca $CA"
   allow_failure: false
   retry: 2
 
@@ -76,10 +98,8 @@ include:
 #### lint
 ############################################
 
-yml_lint_input:
+yaml_lint:
   <<: *yaml_lint
-  variables:
-    path: "./bin/input.yml"
 
 ############################################
 #### ansible-lint
@@ -88,16 +108,36 @@ yml_lint_input:
 ansible_lint:
   <<: *ansible_lint
   needs:
-    - "yml_lint_input"
+    - "yaml_lint"
 
-#############################################
-##### build and test
-#############################################
+############################################
+#### certifications
+############################################
 
-build_bootstrap_ssl_files:
-  <<: *build_and_test
+certification_My-Local-Ansible-Root-CA:
+  <<: *certification
   variables:
-    path: "./bin"
-    binary: "certifications"
+    CA: "My-Local-Ansible-Root-CA"
+  needs:
+    - "ansible_lint"
+
+certification_My-Local-Ansible-Intermediate-CA-1:
+  <<: *certification
+  variables:
+    CA: "My-Local-Ansible-Intermediate-CA-1"
+  needs:
+    - "ansible_lint"
+
+certification_My-Local-Ansible-Intermediate-CA-2:
+  <<: *certification
+  variables:
+    CA: "My-Local-Ansible-Intermediate-CA-2"
+  needs:
+    - "ansible_lint"
+
+certification_My-Local-Ansible-Service-1-CA:
+  <<: *certification
+  variables:
+    CA: "My-Local-Ansible-Service-1-CA"
   needs:
     - "ansible_lint"

@@ -1,0 +1,2 @@
+R	331125103625Z	231128103637Z	1000	unknown	/C=FR/ST=state/O=Local Ansible/OU=My Local Ansible Root CA/CN=not-a-cert.net/emailAddress=administrateur@labo-cbz.net
+V	331125103701Z		1001	unknown	/C=FR/ST=state/O=Local Ansible/OU=My Local Ansible Intermediate CA 1/CN=My-Local-Ansible-Intermediate-CA-1/emailAddress=contact@your.domain.tld

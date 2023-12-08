@@ -1,0 +1,36 @@
+#!/bin/bash
+cd ./../
+source .env || exit
+source .nexus.env || exit
+
+if [ $# -eq 0 ]; then
+    echo "ERROR : No CA name givent"
+    echo "USE : ./push_ca <CA_NAME_FOLDER>"
+    exit 1
+fi
+
+CA="$1"
+
+for BUNDLE in ./${SSL_FOLDER}/${CA}/bundles/*.zip; do
+    if [ "${BUNDLE: -4}" == ".zip" ] || [[ "${BUNDLE}" == *"lock"* ]]; then
+        FILENAME=$(basename "$BUNDLE")
+        echo "PUSH_CA: PUSH BUNDLE FILE TO NEXUS: ${BUNDLE}"
+        curl -v -u "${PUSH_NEXUS_LOGIN}:${PUSH_NEXUS_PASSWORD}" -H "Content-Type: application/zip" --upload-file "${BUNDLE}" "${PUSH_NEXUS_URL}/${CA}/bundles/${FILENAME}" --insecure
+    fi
+done
+
+for PRIVATE in ./${SSL_FOLDER}/${CA}/private/*.key; do
+    if [ "${PRIVATE: -4}" == ".key" ] || [[ "${BUNDLE}" == *"lock"* ]]; then
+        FILENAME=$(basename "$PRIVATE")
+        echo "PUSH_CA: PUSH PRIVATE FILE TO NEXUS: ${PRIVATE}"
+        curl -v -u "${PUSH_NEXUS_LOGIN}:${PUSH_NEXUS_PASSWORD}" -H "Content-Type: application/zip" --upload-file "${PRIVATE}" "${PUSH_NEXUS_URL}/${CA}/private/${FILENAME}" --insecure
+    fi
+done
+
+for CERT in ./${SSL_FOLDER}/${CA}/certs/*.key; do
+    if [ "${CERT: -4}" == ".crt" ] || [[ "${BUNDLE}" == *"lock"* ]]; then
+        FILENAME=$(basename "$CERT")
+        echo "PUSH_CA: PUSH CERT FILE TO NEXUS: ${CERT}"
+        curl -v -u "${PUSH_NEXUS_LOGIN}:${PUSH_NEXUS_PASSWORD}" -H "Content-Type: application/zip" --upload-file "${CERT}" "${PUSH_NEXUS_URL}/${CA}/certs/${FILENAME}" --insecure
+    fi
+done
