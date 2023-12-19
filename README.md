@@ -101,6 +101,11 @@ Here you can put your change to keep a trace of your work and decisions.
 * Handles revocation and rewriting.
 * CICD Push certs.
 
+### 2023-12-19: Cert push fix and pre-commit script
+
+* Added pre-commit script in ./bin (dont forget to install in your .git/hooks and chmod +x)
+* Fix the push script: certs wanst pushed
+
 ## Authors
 
 * Lord Robin Crombez

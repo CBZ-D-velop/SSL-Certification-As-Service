@@ -1,0 +1,20 @@
+#!/bin/bash
+source .env || exit
+source "./${GPG_KEY}" || exit
+
+# ADD FILE TO BE GITTED
+for CURRENT_SSL_FOLDER in ./${SSL_FOLDER}/*; do
+    if [ -d "${CURRENT_SSL_FOLDER}" ]; then
+        for SUB_SSL_FOLDER in "$CURRENT_SSL_FOLDER"/*; do
+            if [ -d "$SUB_SSL_FOLDER" ]; then
+                echo "LOCK: ADDED IN: $SUB_SSL_FOLDER/empty.lock"
+                echo "JUST FOR GIT" > "$SUB_SSL_FOLDER/empty.lock"
+            fi
+        done
+    fi
+done
+
+cd ./${BIN_FOLDER}
+bash ./${BIN_CYPHER}
+cd ..
+git add .

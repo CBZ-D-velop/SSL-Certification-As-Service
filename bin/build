@@ -1,11 +1,8 @@
 #!/bin/bash
 
-# Install playbooks
 ansible-galaxy install -r ./../requirements.yml -p ./../Ansible
 
-# Install roles
 for playbook_dir in ./../Ansible/*; do
-    # Vérification si le dossier est un répertoire
     if [ -d "$playbook_dir" ]; then
         pushd "$playbook_dir" >/dev/null
         ansible-galaxy install -r requirements.yml -p ./roles
