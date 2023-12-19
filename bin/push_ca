@@ -27,7 +27,7 @@ for PRIVATE in ./${SSL_FOLDER}/${CA}/private/*.key; do
     fi
 done
 
-for CERT in ./${SSL_FOLDER}/${CA}/certs/*.key; do
+for CERT in ./${SSL_FOLDER}/${CA}/certs/*.crt; do
     if [ "${CERT: -4}" == ".crt" ] || [[ "${BUNDLE}" == *"lock"* ]]; then
         FILENAME=$(basename "$CERT")
         echo "PUSH_CA: PUSH CERT FILE TO NEXUS: ${CERT}"
