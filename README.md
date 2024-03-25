@@ -78,7 +78,7 @@ ${CICD_GPG_KEY} # GPG decryption of CA and CERTS private data
 ${CICD_ANSIBLE_VAULT_KEY} # Ansible input decryption
 #
 ${NEXUS_ADDRESS_HTTPS} # Your remote address
-${NEXUS_CICD_TESTS_REPOS} # Your remote repository name/path
+${NEXUS_CICD_TESTS_REPOSITORY} # Your remote repository name/path
 ${NEXUS_REPOS_USERNAME} # User for push operations
 ${NEXUS_REPOS_PASSWORD} # User password
 ```
@@ -105,6 +105,10 @@ Here you can put your change to keep a trace of your work and decisions.
 
 * Added pre-commit script in ./bin (dont forget to install in your .git/hooks and chmod +x)
 * Fix the push script: certs wanst pushed
+
+### 2023-12-19
+
+* Changed vars and change CICD for better performances
 
 ## Authors
 
