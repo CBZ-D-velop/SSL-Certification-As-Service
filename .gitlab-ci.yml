@@ -41,6 +41,9 @@ variables:
   script:
     - yamllint -c ./.yamllint .
   allow_failure: false
+  rules:
+    - if: '$CI_COMMIT_MESSAGE=~/^[^Merge]/ && $CI_COMMIT_BRANCH == "develop"'
+    - if: '$CI_COMMIT_BRANCH == "main"'
 
 .ansible_lint: &ansible_lint
   stage: lint
@@ -53,6 +56,9 @@ variables:
   script:
     - ansible-lint --config=./.ansible-lint --exclude molecule --exclude tests .
   allow_failure: false
+  rules:
+    - if: '$CI_COMMIT_MESSAGE=~/^[^Merge]/ && $CI_COMMIT_BRANCH == "develop"'
+    - if: '$CI_COMMIT_BRANCH == "main"'
 
 # We will build and run each tools with the input.yml file
 .certification: &certification
