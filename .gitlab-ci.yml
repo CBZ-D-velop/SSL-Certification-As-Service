@@ -29,7 +29,7 @@ variables:
 # we dont need to test rest of the pipeline
 .yaml_lint: &yaml_lint
   stage: lint
-  image: $NEXUS_ADDRESS/$DOCKER_IMAGE_YAML_LINT
+  image: $NEXUS_REPOS_DOCKER_REGISTRY/$DOCKER_IMAGE_YAML_LINT
   before_script:
     # Fix weird ansible bug: https://github.com/trailofbits/algo/issues/1637
     # This probably happens due to gitlab-runner mounting the git repo into the container
@@ -41,7 +41,7 @@ variables:
 
 .ansible_lint: &ansible_lint
   stage: lint
-  image: $NEXUS_ADDRESS/$DOCKER_IMAGE_ANSIBLE_LINT
+  image: $NEXUS_REPOS_DOCKER_REGISTRY/$DOCKER_IMAGE_ANSIBLE_LINT
   before_script:
     # Fix weird ansible bug: https://github.com/trailofbits/algo/issues/1637
     # This probably happens due to gitlab-runner mounting the git repo into the container
@@ -55,7 +55,7 @@ variables:
 # We will build and run each tools with the input.yml file
 .certification: &certification
   stage: certifications
-  image: $NEXUS_ADDRESS/$DOCKER_IMAGE_DEBIAN_11_CERTIFICATION
+  image: $NEXUS_REPOS_DOCKER_REGISTRY/$DOCKER_IMAGE_DEBIAN_11_CERTIFICATION
   before_script:
     # Fix weird ansible bug: https://github.com/trailofbits/algo/issues/1637
     # This probably happens due to gitlab-runner mounting the git repo into the container
