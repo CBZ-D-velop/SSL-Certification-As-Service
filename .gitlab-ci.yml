@@ -9,7 +9,8 @@
 stages:
 - gitlab-test
 - lint
-- certifications
+- sonarqube
+- publish
 
 variables:
   ANSIBLE_FORCE_COLOR: "true"
@@ -19,6 +20,9 @@ variables:
   DOCKER_IMAGE_JINJA_LINT: robincbz/alpine-jinjalint:latest
   DOCKER_IMAGE_YAML_LINT: robincbz/alpine-yamllint:latest
   DOCKER_IMAGE_DEBIAN_11_CERTIFICATION: robincbz/debian-11-certification:latest
+  DOCKER_IMAGE_ALPINE_RELEASE_CLI: "robincbz/alpine-releasecli:latest"
+  DOCKER_IMAGE_ALPINE_GIT: robincbz/alpine-git:latest
+  DOCKER_IMAGE_SONAR_SCANNER_CLI: "robincbz/alpine-sonarcli:latest"
 
 ###############################################################################
 #################### actions
@@ -37,7 +41,6 @@ variables:
   script:
     - yamllint -c ./.yamllint .
   allow_failure: false
-  retry: 2
 
 .ansible_lint: &ansible_lint
   stage: lint
@@ -50,11 +53,10 @@ variables:
   script:
     - ansible-lint --config=./.ansible-lint --exclude molecule --exclude tests .
   allow_failure: false
-  retry: 2
 
 # We will build and run each tools with the input.yml file
 .certification: &certification
-  stage: certifications
+  stage: publish
   image: $NEXUS_REPOS_DOCKER_REGISTRY/$DOCKER_IMAGE_DEBIAN_11_CERTIFICATION
   before_script:
     # Fix weird ansible bug: https://github.com/trailofbits/algo/issues/1637
@@ -69,8 +71,7 @@ variables:
     #
     - "echo \"PUSH_CA_NEXUS_ADDRESS_HTTPS=${NEXUS_ADDRESS_HTTPS}\" > .nexus.env"
     - "echo \"PUSH_CA_NEXUS_REPOSITORY=${NEXUS_CICD_TESTS_REPOSITORY}\" >> .nexus.env"
-    - "source .nexus.env"
-    - "echo \"PUSH_CA_NEXUS_URL=${PUSH_CA_NEXUS_ADDRESS_HTTPS}/repository/${PUSH_CA_NEXUS_REPOSITORY}\" >> .nexus.env"
+    - "echo \"PUSH_CA_NEXUS_URL=${NEXUS_ADDRESS_HTTPS}/repository/${NEXUS_CICD_TESTS_REPOSITORY}/${VERSION}-${TIMESTAMP}\" >> .nexus.env"
     - "echo \"PUSH_CA_NEXUS_REPOS_USERNAME=${NEXUS_REPOS_USERNAME}\" >> .nexus.env"
     - "echo \"PUSH_CA_NEXUS_REPOS_PASSWORD=${NEXUS_REPOS_PASSWORD}\" >> .nexus.env"
     #
@@ -83,9 +84,11 @@ variables:
     #
     - "cd ./bin && ./push_ca $CA"
   allow_failure: false
-  retry: 2
   rules:
     - if: '$CI_COMMIT_BRANCH == "main"'
+  needs:
+    - job: "set_version_artefact"
+      artifacts: true
 
 ###############################################################################
 #################### CI JOBS
@@ -109,12 +112,61 @@ include:
 yaml_lint:
   <<: *yaml_lint
 
-############################################
-#### ansible-lint
-############################################
-
 ansible_lint:
   <<: *ansible_lint
+
+sonarqube-check:
+  stage: sonarqube
+  image: 
+    name: $NEXUS_REPOS_DOCKER_REGISTRY/$DOCKER_IMAGE_SONAR_SCANNER_CLI
+    entrypoint: [""]
+  variables:
+    SONAR_USER_HOME: "${CI_PROJECT_DIR}/.sonar"  # Defines the location of the analysis task cache
+    GIT_DEPTH: "0"  # Tells git to fetch all the branches of the project, required by the analysis task
+  cache:
+    key: "${CI_JOB_NAME}"
+    paths:
+      - ".sonar/cache"
+  script: 
+    - "sonar-scanner"
+  rules:
+    - if: '$CI_COMMIT_MESSAGE=~/^[^Merge]/ && $CI_COMMIT_BRANCH == "develop"'
+    - if: '$CI_COMMIT_BRANCH == "main"'
+
+set_version_artefact:
+  image: $NEXUS_REPOS_DOCKER_REGISTRY/$DOCKER_IMAGE_ALPINE_GIT
+  stage: publish
+  before_script:
+    - "TAGS=$(git ls-remote --tags origin | awk '{print $2}' | grep -oE 'refs/tags/[0-9.]+' | cut -d '/' -f 3 | sort -V)"
+    - "LATEST_TAG=$(echo \"$TAGS\" | tail -n 1)"
+    - "VERSION=$(echo \"$LATEST_TAG\" | grep -oE '^[0-9]+') && VERSION=$((VERSION + 1))"
+  script:
+    - "echo \"RELEASE $VERSION from latest $VERSION\""
+    - "echo \"VERSION=$VERSION\" >> VERSION.env"
+    - "echo \"TIMESTAMP=$(date +'%Y.%m.%d-%H.%M.%S')\" >> VERSION.env"
+  artifacts:
+    reports:
+      dotenv: VERSION.env
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "main"'
+  needs:
+    - "sonarqube-check"
+
+publish_release:
+  image: $NEXUS_REPOS_DOCKER_REGISTRY/$DOCKER_IMAGE_ALPINE_RELEASE_CLI
+  stage: publish
+  script:
+    - "echo \"RELEASE $VERSION from latest $VERSION\""
+  release:
+    name: "$VERSION"
+    description: "RELEASE $VERSION from latest $VERSION"
+    tag_name: "$VERSION"
+    ref: "$CI_COMMIT_SHA"
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "main"'
+  needs:
+    - job: "set_version_artefact"
+      artifacts: true
 
 
 ############################################
