@@ -76,6 +76,7 @@ variables:
     - "cd ./bin && ./build && cd .."
     - "cd ./bin && ./uncypher && cd .."
   script:
+    - "cat .nexus.env"
     - "source .env"
     - "source .nexus.env"
     - "cd ${CA_INPUT_FOLDER}/${CA} && ./run && cd ./../.."
