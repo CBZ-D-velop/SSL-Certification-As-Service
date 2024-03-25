@@ -38,6 +38,12 @@ variables:
     # Fix weird ansible bug: https://github.com/trailofbits/algo/issues/1637
     # This probably happens due to gitlab-runner mounting the git repo into the container
     - "chmod o-w ."
+    #
+    - "echo \"CYPHER_PASS=${CICD_GPG_KEY}\" > .gpg.key"
+    - "echo \"${CICD_ANSIBLE_VAULT_KEY}\" > .vault.key"
+    #
+    - "cd ./bin && ./build && cd .."
+    - "cd ./bin && ./uncypher && cd .."
   script:
     - yamllint -c ./.yamllint .
   allow_failure: false
@@ -53,6 +59,12 @@ variables:
     # This probably happens due to gitlab-runner mounting the git repo into the container
     - "chmod o-w ."
     - "cp .ansible.cfg ~/"
+    #
+    - "echo \"CYPHER_PASS=${CICD_GPG_KEY}\" > .gpg.key"
+    - "echo \"${CICD_ANSIBLE_VAULT_KEY}\" > .vault.key"
+    #
+    - "cd ./bin && ./build && cd .."
+    - "cd ./bin && ./uncypher && cd .."
   script:
     - ansible-lint --config=./.ansible-lint --exclude molecule --exclude tests .
   allow_failure: false
@@ -133,6 +145,13 @@ sonarqube-check:
     key: "${CI_JOB_NAME}"
     paths:
       - ".sonar/cache"
+  before_script:
+    #
+    - "echo \"CYPHER_PASS=${CICD_GPG_KEY}\" > .gpg.key"
+    - "echo \"${CICD_ANSIBLE_VAULT_KEY}\" > .vault.key"
+    #
+    - "cd ./bin && ./build && cd .."
+    - "cd ./bin && ./uncypher && cd .."
   script: 
     - "sonar-scanner"
   rules:
