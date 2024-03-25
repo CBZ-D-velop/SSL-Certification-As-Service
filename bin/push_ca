@@ -15,7 +15,7 @@ for BUNDLE in ./${SSL_FOLDER}/${CA}/bundles/*.zip; do
     if [ "${BUNDLE: -4}" == ".zip" ] || [[ "${BUNDLE}" == *"lock"* ]]; then
         FILENAME=$(basename "$BUNDLE")
         echo "PUSH_CA: PUSH BUNDLE FILE TO NEXUS: ${BUNDLE}"
-        curl -v -u "${NEXUS_REPOS_USERNAME}:${NEXUS_REPOS_PASSWORD}" -H "Content-Type: application/zip" --upload-file "${BUNDLE}" "${NEXUS_URL}/${CA}/bundles/${FILENAME}" --insecure
+        curl -v -u "${PUSH_CA_NEXUS_REPOS_USERNAME}:${PUSH_CA_NEXUS_REPOS_PASSWORD}" -H "Content-Type: application/zip" --upload-file "${BUNDLE}" "${PUSH_CA_NEXUS_URL}/${CA}/bundles/${FILENAME}" --insecure
     fi
 done
 
@@ -23,7 +23,7 @@ for PRIVATE in ./${SSL_FOLDER}/${CA}/private/*.key; do
     if [ "${PRIVATE: -4}" == ".key" ] || [[ "${BUNDLE}" == *"lock"* ]]; then
         FILENAME=$(basename "$PRIVATE")
         echo "PUSH_CA: PUSH PRIVATE FILE TO NEXUS: ${PRIVATE}"
-        curl -v -u "${NEXUS_REPOS_USERNAME}:${NEXUS_REPOS_PASSWORD}" -H "Content-Type: application/zip" --upload-file "${PRIVATE}" "${NEXUS_URL}/${CA}/private/${FILENAME}" --insecure
+        curl -v -u "${PUSH_CA_NEXUS_REPOS_USERNAME}:${PUSH_CA_NEXUS_REPOS_PASSWORD}" -H "Content-Type: application/zip" --upload-file "${PRIVATE}" "${PUSH_CA_NEXUS_URL}/${CA}/private/${FILENAME}" --insecure
     fi
 done
 
@@ -31,6 +31,6 @@ for CERT in ./${SSL_FOLDER}/${CA}/certs/*.crt; do
     if [ "${CERT: -4}" == ".crt" ] || [[ "${BUNDLE}" == *"lock"* ]]; then
         FILENAME=$(basename "$CERT")
         echo "PUSH_CA: PUSH CERT FILE TO NEXUS: ${CERT}"
-        curl -v -u "${NEXUS_REPOS_USERNAME}:${NEXUS_REPOS_PASSWORD}" -H "Content-Type: application/zip" --upload-file "${CERT}" "${NEXUS_URL}/${CA}/certs/${FILENAME}" --insecure
+        curl -v -u "${PUSH_CA_NEXUS_REPOS_USERNAME}:${PUSH_CA_NEXUS_REPOS_PASSWORD}" -H "Content-Type: application/zip" --upload-file "${CERT}" "${PUSH_CA_NEXUS_URL}/${CA}/certs/${FILENAME}" --insecure
     fi
 done

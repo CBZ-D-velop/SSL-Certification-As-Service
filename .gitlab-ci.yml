@@ -67,17 +67,15 @@ variables:
     - "echo \"CYPHER_PASS=${CICD_GPG_KEY}\" > .gpg.key"
     - "echo \"${CICD_ANSIBLE_VAULT_KEY}\" > .vault.key"
     #
-    - "echo \"NEXUS_ADDRESS_HTTPS=${NEXUS_ADDRESS_HTTPS}\" > .nexus.env"
-    - "echo \"NEXUS_REPOSITORY=${NEXUS_CICD_TESTS_REPOSITORY}\" >> .nexus.env"
-    - "echo \"NEXUS_URL=${NEXUS_ADDRESS_HTTPS}/repository/${NEXUS_REPOSITORY}\" >> .nexus.env"
-    - "echo \"NEXUS_REPOS_USERNAME=${NEXUS_REPOS_USERNAME}\" >> .nexus.env"
-    - "echo \"NEXUS_REPOS_PASSWORD=${NEXUS_REPOS_PASSWORD}\" >> .nexus.env"
+    - "echo \"PUSH_CA_NEXUS_ADDRESS_HTTPS=${NEXUS_ADDRESS_HTTPS}\" > .nexus.env"
+    - "echo \"PUSH_CA_NEXUS_REPOSITORY=${NEXUS_CICD_TESTS_REPOSITORY}\" >> .nexus.env"
+    - "echo \"PUSH_CA_NEXUS_URL=${PUSH_CA_NEXUS_ADDRESS_HTTPS}/repository/${PUSH_CA_NEXUS_REPOSITORY}\" >> .nexus.env"
+    - "echo \"PUSH_CA_NEXUS_REPOS_USERNAME=${NEXUS_REPOS_USERNAME}\" >> .nexus.env"
+    - "echo \"PUSH_CA_NEXUS_REPOS_PASSWORD=${NEXUS_REPOS_PASSWORD}\" >> .nexus.env"
     #
     - "cd ./bin && ./build && cd .."
     - "cd ./bin && ./uncypher && cd .."
   script:
-    - "source .env"
-    - "source .nexus.env"
     - "cd ${CA_INPUT_FOLDER}/${CA} && ./run && cd ./../.."
     #
     - "source .nexus.env"
