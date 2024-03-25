@@ -1,4 +1,3 @@
 ---
 - name: "playbook.bootstrap_ssl_files"
   src: "https://github.com/CBZ-D-velop/Ansible-Playbook-Tool-Bootstrap-SSL-Files.git"
-  version: "3.0"
