@@ -76,9 +76,10 @@ variables:
     - "cd ./bin && ./build && cd .."
     - "cd ./bin && ./uncypher && cd .."
   script:
+    - "source .env"
+    - "source .nexus.env"
     - "cd ${CA_INPUT_FOLDER}/${CA} && ./run && cd ./../.."
     #
-    - "source .nexus.env"
     - "cd ./bin && ./push_ca $CA"
   allow_failure: false
   retry: 2
