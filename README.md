@@ -78,12 +78,13 @@ ${CICD_GPG_KEY} # GPG decryption of CA and CERTS private data
 ${CICD_ANSIBLE_VAULT_KEY} # Ansible input decryption
 #
 ${NEXUS_ADDRESS_HTTPS} # Your remote address
-${NEXUS_CICD_TESTS_REPOSITORY} # Your remote repository name/path
+${NEXUS_CICD_REPOSITORY} # Your remote repository name/path
+${NEXUS_URL} # Concatened value for pushing
 ${NEXUS_REPOS_USERNAME} # User for push operations
 ${NEXUS_REPOS_PASSWORD} # User password
 ```
 
-Masking vars in this manner facilitates their modification.
+Masking vars in this manner facilitates their modification. More informations inside the GitLab CI file.
 
 ## Architectural Decisions Records
 
@@ -109,6 +110,10 @@ Here you can put your change to keep a trace of your work and decisions.
 ### 2023-12-19
 
 * Changed vars and change CICD for better performances
+* Added SonarQube for quality checks
+* CICD contains now a "publish" stage, GitLab Release will be create on "main", and certificates will be publish on "main" to, based on timestamp
+* You can edit the CICD to change the publish output and set "latest" version for crypto material
+* CICD push to a private remote Nexus, so ${VERSION-TIMESTAMP} is used for identification
 
 ## Authors
 
