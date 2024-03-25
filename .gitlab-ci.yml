@@ -69,6 +69,7 @@ variables:
     #
     - "echo \"PUSH_CA_NEXUS_ADDRESS_HTTPS=${NEXUS_ADDRESS_HTTPS}\" > .nexus.env"
     - "echo \"PUSH_CA_NEXUS_REPOSITORY=${NEXUS_CICD_TESTS_REPOSITORY}\" >> .nexus.env"
+    - "source .nexus.env"
     - "echo \"PUSH_CA_NEXUS_URL=${PUSH_CA_NEXUS_ADDRESS_HTTPS}/repository/${PUSH_CA_NEXUS_REPOSITORY}\" >> .nexus.env"
     - "echo \"PUSH_CA_NEXUS_REPOS_USERNAME=${NEXUS_REPOS_USERNAME}\" >> .nexus.env"
     - "echo \"PUSH_CA_NEXUS_REPOS_PASSWORD=${NEXUS_REPOS_PASSWORD}\" >> .nexus.env"
@@ -76,7 +77,6 @@ variables:
     - "cd ./bin && ./build && cd .."
     - "cd ./bin && ./uncypher && cd .."
   script:
-    - "cat .nexus.env"
     - "source .env"
     - "source .nexus.env"
     - "cd ${CA_INPUT_FOLDER}/${CA} && ./run && cd ./../.."
