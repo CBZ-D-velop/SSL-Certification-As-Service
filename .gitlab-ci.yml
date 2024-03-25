@@ -83,6 +83,8 @@ variables:
     - "cd ./bin && ./push_ca $CA"
   allow_failure: false
   retry: 2
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "main"'
 
 ###############################################################################
 #################### CI JOBS
@@ -112,8 +114,7 @@ yaml_lint:
 
 ansible_lint:
   <<: *ansible_lint
-  needs:
-    - "yaml_lint"
+
 
 ############################################
 #### certifications
@@ -123,26 +124,18 @@ certification_My-Local-Ansible-Root-CA:
   <<: *certification
   variables:
     CA: "My-Local-Ansible-Root-CA"
-  needs:
-    - "ansible_lint"
 
 certification_My-Local-Ansible-Intermediate-CA-1:
   <<: *certification
   variables:
     CA: "My-Local-Ansible-Intermediate-CA-1"
-  needs:
-    - "ansible_lint"
 
 certification_My-Local-Ansible-Intermediate-CA-2:
   <<: *certification
   variables:
     CA: "My-Local-Ansible-Intermediate-CA-2"
-  needs:
-    - "ansible_lint"
 
 certification_My-Local-Ansible-Service-1-CA:
   <<: *certification
   variables:
     CA: "My-Local-Ansible-Service-1-CA"
-  needs:
-    - "ansible_lint"
