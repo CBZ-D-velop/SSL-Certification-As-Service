@@ -13,6 +13,7 @@ done
 # UNENCRYPT ALL INPUT FILES WITH GPG
 for CURRENT_SSL_FOLDER in ./${SSL_FOLDER}/*; do
     if [ -d "${CURRENT_SSL_FOLDER}" ]; then
+        # Decrypt private files
         for PRIVATE in ${CURRENT_SSL_FOLDER}/private/*; do
             if [ -f "${PRIVATE}" ]; then
                 if [ "${PRIVATE: -4}" == ".gpg" ] || [[ "${PRIVATE}" == *"lock"* ]]; then
@@ -22,6 +23,28 @@ for CURRENT_SSL_FOLDER in ./${SSL_FOLDER}/*; do
                 else
                     echo "UNENCRYPTION: ALREADY DONE: ${PRIVATE}"
                 fi
+            fi
+        done
+        
+        # Decrypt key files in bundle folders
+        for BUNDLE_FOLDER in ${CURRENT_SSL_FOLDER}/bundles/*; do
+            if [ -d "${BUNDLE_FOLDER}" ]; then
+                for KEY_FILE in ${BUNDLE_FOLDER}/*.key.gpg; do
+                    if [ -f "${KEY_FILE}" ]; then
+                        OUTPUT=$(basename "${KEY_FILE}" .gpg)
+                        gpg --batch --passphrase ${CYPHER_PASS} -o "${BUNDLE_FOLDER}/$OUTPUT" -d "${KEY_FILE}" && rm "${KEY_FILE}"
+                        echo "UNENCRYPTION: DONE: ${KEY_FILE}"
+                    fi
+                done
+            fi
+        done
+        
+        # Decrypt .zip files in bundle
+        for ZIP_FILE in ${CURRENT_SSL_FOLDER}/bundles/*.zip.gpg; do
+            if [ -f "${ZIP_FILE}" ]; then
+                OUTPUT=$(basename "${ZIP_FILE}" .gpg)
+                gpg --batch --passphrase ${CYPHER_PASS} -o "${CURRENT_SSL_FOLDER}/bundles/$OUTPUT" -d "${ZIP_FILE}" && rm "${ZIP_FILE}"
+                echo "UNENCRYPTION: DONE: ${ZIP_FILE}"
             fi
         done
     fi

@@ -1,0 +1,51 @@
+# You can override the included template(s) by including variable overrides
+# SAST customization: https://docs.gitlab.com/ee/user/application_security/sast/#customizing-the-sast-settings
+# Secret Detection customization: https://docs.gitlab.com/ee/user/application_security/secret_detection/#customizing-settings
+# Dependency Scanning customization: https://docs.gitlab.com/ee/user/application_security/dependency_scanning/#customizing-the-dependency-scanning-settings
+# Container Scanning customization: https://docs.gitlab.com/ee/user/application_security/container_scanning/#customizing-the-container-scanning-settings
+# Note that environment variables can be set in several places
+# See https://docs.gitlab.com/ee/ci/variables/#cicd-variable-precedence
+
+stages:
+  - publish
+
+###############################################################################
+#################### EXTENDABLES
+###############################################################################
+
+
+# We will build and run each tools with the input.yml file
+.build:publish: &build_publish
+  stage: publish
+  image: $NEXUS_DOCKER_PROXY_REGISTRY/$DOCKER_IMAGE__BUILD_PKI
+  before_script:
+    - "cp .ansible.cfg ~/"
+    #
+    - "echo \"CYPHER_PASS=${CICD_GPG_KEY}\" > .gpg.key"
+    - "echo \"${CICD_ANSIBLE_VAULT_KEY}\" > .vault.key"
+    #
+    - "cd ./bin && bash ./build && ./uncypher && cd .."
+    #
+    - "echo \"NEXUS_REPOSITORY_NAME=${NEXUS_REPOSITORY_NAME}\" >> .nexus.env"
+    - "echo \"NEXUS_REPOSITORY_ADDRESSE=${NEXUS_REPOSITORY_URL}/repository/${NEXUS_REPOSITORY_NAME}\" >> .nexus.env"
+    - "echo \"NEXUS_CREDENTIALS_USR=${GITLAB_CI_NEXUS_CREDENTIALS_USR}\" >> .nexus.env"
+    - "echo \"NEXUS_CREDENTIALS_PSW=${GITLAB_CI_NEXUS_CREDENTIALS_PSW}\" >> .nexus.env"
+    #
+    - "cd ./bin && bash ./build && cd .."
+    - "cd ./bin && bash ./uncypher && cd .."
+  script:
+    - "source .env"
+    - "source .nexus.env"
+    - "cd ${CA_INPUT_FOLDER}/${PKI_NAME} && ./run && cd ./../.."
+    #
+    - "cd ./bin && ./push_ca $PKI_NAME"
+  allow_failure: false
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "main"'
+
+###############################################################################
+#################### GENERATED CI JOBS
+###############################################################################
+#
+#
+#
