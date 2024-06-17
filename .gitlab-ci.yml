@@ -6,107 +6,24 @@
 # Note that environment variables can be set in several places
 # See https://docs.gitlab.com/ee/ci/variables/#cicd-variable-precedence
 
-stages:
-- gitlab-test
-- lint
-- sonarqube
-- publish
-
 variables:
   ANSIBLE_FORCE_COLOR: "true"
   PY_COLORS: "1"
   #
-  DOCKER_IMAGE_ANSIBLE_LINT: robincbz/alpine-ansiblelint:latest
-  DOCKER_IMAGE_JINJA_LINT: robincbz/alpine-jinjalint:latest
-  DOCKER_IMAGE_YAML_LINT: robincbz/alpine-yamllint:latest
-  DOCKER_IMAGE_DEBIAN_11_CERTIFICATION: robincbz/debian-11-certification:latest
-  DOCKER_IMAGE_ALPINE_RELEASE_CLI: "robincbz/alpine-releasecli:latest"
-  DOCKER_IMAGE_ALPINE_GIT: robincbz/alpine-git:latest
-  DOCKER_IMAGE_SONAR_SCANNER_CLI: "robincbz/alpine-sonarcli:latest"
+  DOCKER_IMAGE__LINT_ANSIBLE: "labocbz/lint-ansible:latest"
+  DOCKER_IMAGE__LINT_YAML: "labocbz/lint-yaml:latest"
+  DOCKER_IMAGE__LINT_SECRETS: "labocbz/lint-secrets:latest"
+  DOCKER_IMAGE__LINT_MARKDOWN: "labocbz/lint-markdown:latest"
+  DOCKER_IMAGE__BUILD_PKI: "labocbz/build-pki:latest"
+  DOCKER_IMAGE__RUN_SSH: "labocbz/run-ssh:latest"
 
-###############################################################################
-#################### actions
-###############################################################################
+image: $NEXUS_DOCKER_GROUP_REGISTRY/$DOCKER_IMAGE__RUN_SSH
 
-# To start, we need to lint role's files with a YML vision
-# Because if one of the files doesn't respect YML conventions,
-# we dont need to test rest of the pipeline
-.yaml_lint: &yaml_lint
-  stage: lint
-  image: $NEXUS_REPOS_DOCKER_REGISTRY/$DOCKER_IMAGE_YAML_LINT
-  before_script:
-    # Fix weird ansible bug: https://github.com/trailofbits/algo/issues/1637
-    # This probably happens due to gitlab-runner mounting the git repo into the container
-    - "chmod o-w ."
-    #
-    - "echo \"CYPHER_PASS=${CICD_GPG_KEY}\" > .gpg.key"
-    - "echo \"${CICD_ANSIBLE_VAULT_KEY}\" > .vault.key"
-    #
-    - "cd ./bin && ./build && cd .."
-    - "cd ./bin && ./uncypher && cd .."
-  script:
-    - yamllint -c ./.yamllint .
-  allow_failure: false
-  rules:
-    - if: '$CI_COMMIT_MESSAGE=~/^[^Merge]/ && $CI_COMMIT_BRANCH == "develop"'
-    - if: '$CI_COMMIT_BRANCH == "main"'
-
-.ansible_lint: &ansible_lint
-  stage: lint
-  image: $NEXUS_REPOS_DOCKER_REGISTRY/$DOCKER_IMAGE_ANSIBLE_LINT
-  before_script:
-    # Fix weird ansible bug: https://github.com/trailofbits/algo/issues/1637
-    # This probably happens due to gitlab-runner mounting the git repo into the container
-    - "chmod o-w ."
-    - "cp .ansible.cfg ~/"
-    #
-    - "echo \"CYPHER_PASS=${CICD_GPG_KEY}\" > .gpg.key"
-    - "echo \"${CICD_ANSIBLE_VAULT_KEY}\" > .vault.key"
-    #
-    - "cd ./bin && ./build && cd .."
-    - "cd ./bin && ./uncypher && cd .."
-  script:
-    - ansible-lint --config=./.ansible-lint --exclude molecule --exclude tests .
-  allow_failure: false
-  rules:
-    - if: '$CI_COMMIT_MESSAGE=~/^[^Merge]/ && $CI_COMMIT_BRANCH == "develop"'
-    - if: '$CI_COMMIT_BRANCH == "main"'
-
-# We will build and run each tools with the input.yml file
-.certification: &certification
-  stage: publish
-  image: $NEXUS_REPOS_DOCKER_REGISTRY/$DOCKER_IMAGE_DEBIAN_11_CERTIFICATION
-  before_script:
-    # Fix weird ansible bug: https://github.com/trailofbits/algo/issues/1637
-    # This probably happens due to gitlab-runner mounting the git repo into the container
-    - "chmod o-w ."
-    - "cp .ansible.cfg ~/"
-    - "echo \"127.0.0.1   $(hostname)\" >> /etc/hosts"
-    - "echo \"127.0.0.1   localhost\" >> /etc/hosts"
-    #
-    - "echo \"CYPHER_PASS=${CICD_GPG_KEY}\" > .gpg.key"
-    - "echo \"${CICD_ANSIBLE_VAULT_KEY}\" > .vault.key"
-    #
-    - "echo \"PUSH_CA_NEXUS_ADDRESS_HTTPS=${NEXUS_ADDRESS_HTTPS}\" > .nexus.env"
-    - "echo \"PUSH_CA_NEXUS_REPOSITORY=${NEXUS_CICD_TESTS_REPOSITORY}\" >> .nexus.env"
-    - "echo \"PUSH_CA_NEXUS_URL=${NEXUS_ADDRESS_HTTPS}/repository/${NEXUS_CICD_TESTS_REPOSITORY}/${VERSION}-${TIMESTAMP}\" >> .nexus.env"
-    - "echo \"PUSH_CA_NEXUS_REPOS_USERNAME=${NEXUS_REPOS_USERNAME}\" >> .nexus.env"
-    - "echo \"PUSH_CA_NEXUS_REPOS_PASSWORD=${NEXUS_REPOS_PASSWORD}\" >> .nexus.env"
-    #
-    - "cd ./bin && ./build && cd .."
-    - "cd ./bin && ./uncypher && cd .."
-  script:
-    - "source .env"
-    - "source .nexus.env"
-    - "cd ${CA_INPUT_FOLDER}/${CA} && ./run && cd ./../.."
-    #
-    - "cd ./bin && ./push_ca $CA"
-  allow_failure: false
-  rules:
-    - if: '$CI_COMMIT_BRANCH == "main"'
-  needs:
-    - job: "set_version_artefact"
-      artifacts: true
+stages:
+  - gitlab-test
+  - lint
+  - generate
+  - publish
 
 ###############################################################################
 #################### CI JOBS
@@ -121,99 +38,90 @@ sast:
   stage: gitlab-test
 include:
 - template: Security/SAST.gitlab-ci.yml
-  allow_failure: false
 
 ############################################
 #### lint
 ############################################
 
-yaml_lint:
-  <<: *yaml_lint
-
-ansible_lint:
-  <<: *ansible_lint
-
-sonarqube-check:
-  stage: sonarqube
-  image: 
-    name: $NEXUS_REPOS_DOCKER_REGISTRY/$DOCKER_IMAGE_SONAR_SCANNER_CLI
-    entrypoint: [""]
-  variables:
-    SONAR_USER_HOME: "${CI_PROJECT_DIR}/.sonar"  # Defines the location of the analysis task cache
-    GIT_DEPTH: "0"  # Tells git to fetch all the branches of the project, required by the analysis task
-  cache:
-    key: "${CI_JOB_NAME}"
-    paths:
-      - ".sonar/cache"
+lint:yaml:
+  stage: lint
+  image: $NEXUS_DOCKER_PROXY_REGISTRY/$DOCKER_IMAGE__LINT_YAML
   before_script:
+    - "cp .ansible.cfg ~/"
     #
     - "echo \"CYPHER_PASS=${CICD_GPG_KEY}\" > .gpg.key"
     - "echo \"${CICD_ANSIBLE_VAULT_KEY}\" > .vault.key"
     #
-    - "cd ./bin && ./build && cd .."
-    - "cd ./bin && ./uncypher && cd .."
-  script: 
-    - "sonar-scanner"
+    - "cd ./bin && bash ./build && ./uncypher && cd .."
+  script:
+    - yamllint -c ./.yamllint .
+  allow_failure: false
   rules:
-    - if: '$CI_COMMIT_MESSAGE=~/^[^Merge]/ && $CI_COMMIT_BRANCH == "develop"'
     - if: '$CI_COMMIT_BRANCH == "main"'
 
-set_version_artefact:
-  image: $NEXUS_REPOS_DOCKER_REGISTRY/$DOCKER_IMAGE_ALPINE_GIT
-  stage: publish
+lint:ansible:
+  stage: lint
+  image: $NEXUS_DOCKER_PROXY_REGISTRY/$DOCKER_IMAGE__LINT_ANSIBLE
   before_script:
-    - "TAGS=$(git ls-remote --tags origin | awk '{print $2}' | grep -oE 'refs/tags/[0-9.]+' | cut -d '/' -f 3 | sort -V)"
-    - "LATEST_TAG=$(echo \"$TAGS\" | tail -n 1)"
-    - "VERSION=$(echo \"$LATEST_TAG\" | grep -oE '^[0-9]+') && VERSION=$((VERSION + 1))"
+    - "cp .ansible.cfg ~/"
+    #
+    - "echo \"CYPHER_PASS=${CICD_GPG_KEY}\" > .gpg.key"
+    - "echo \"${CICD_ANSIBLE_VAULT_KEY}\" > .vault.key"
+    #
+    - "cd ./bin && bash ./build && ./uncypher && cd .."
   script:
-    - "echo \"RELEASE $VERSION from latest $VERSION\""
-    - "echo \"VERSION=$VERSION\" >> VERSION.env"
-    - "echo \"TIMESTAMP=$(date +'%Y.%m.%d-%H.%M.%S')\" >> VERSION.env"
+    - ansible-lint --config=./.ansible-lint --exclude molecule --exclude tests .
+  allow_failure: false
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "main"'
+
+lint:secrets:
+  stage: lint
+  image: $NEXUS_DOCKER_GROUP_REGISTRY/$DOCKER_IMAGE__LINT_SECRETS
+  script:
+    - "detect-secrets scan"
+    - "detect-secrets audit .secrets.baseline"
+  allow_failure: false
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "main"'
+
+lint:markdown:
+  stage: lint
+  image: $NEXUS_DOCKER_GROUP_REGISTRY/$DOCKER_IMAGE__LINT_MARKDOWN
+  script:
+    - markdownlint './README.md' --disable MD013
+  allow_failure: false
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "main"'
+
+############################################
+#### Generate
+############################################
+
+generate-pipelines:
+  stage: generate
+  image: $NEXUS_DOCKER_GROUP_REGISTRY/$DOCKER_IMAGE__RUN_SSH
+  before_script:
+    - "ls -all"
+    - "cat ./generate-pipelines > ./local-generate-pipelines"
+    - "chmod +x ./local-generate-pipelines"
+  script:
+    - "./local-generate-pipelines"
+    - "ls -all ./.gitlab-ci-generated.yml"
   artifacts:
-    reports:
-      dotenv: VERSION.env
+    paths:
+      - "./.gitlab-ci-generated.yml"
   rules:
     - if: '$CI_COMMIT_BRANCH == "main"'
-  needs:
-    - "sonarqube-check"
 
-publish_release:
-  image: $NEXUS_REPOS_DOCKER_REGISTRY/$DOCKER_IMAGE_ALPINE_RELEASE_CLI
-  stage: publish
-  script:
-    - "echo \"RELEASE $VERSION from latest $VERSION\""
-  release:
-    name: "$VERSION"
-    description: "RELEASE $VERSION from latest $VERSION"
-    tag_name: "$VERSION"
-    ref: "$CI_COMMIT_SHA"
+build:publish:
+  stage: generate
+  needs:
+    - "generate-pipelines"
+  trigger:
+    include:
+      - artifact: ".gitlab-ci-generated.yml"
+        job: generate-pipelines
+    strategy: depend
   rules:
     - if: '$CI_COMMIT_BRANCH == "main"'
-  needs:
-    - job: "set_version_artefact"
-      artifacts: true
-
-
-############################################
-#### certifications
-############################################
-
-certification_My-Local-Ansible-Root-CA:
-  <<: *certification
-  variables:
-    CA: "My-Local-Ansible-Root-CA"
-
-certification_My-Local-Ansible-Intermediate-CA-1:
-  <<: *certification
-  variables:
-    CA: "My-Local-Ansible-Intermediate-CA-1"
-
-certification_My-Local-Ansible-Intermediate-CA-2:
-  <<: *certification
-  variables:
-    CA: "My-Local-Ansible-Intermediate-CA-2"
-
-certification_My-Local-Ansible-Service-1-CA:
-  <<: *certification
-  variables:
-    CA: "My-Local-Ansible-Service-1-CA"

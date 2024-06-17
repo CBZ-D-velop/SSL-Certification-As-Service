@@ -15,7 +15,7 @@
 ![Tag: Automation](https://img.shields.io/badge/Tech-Automation-orange)
 ![Tag: SSL-TLS-mTLS](https://img.shields.io/badge/Tech-SSL--TLS--mTLS-orange)
 
-## Introduction
+## Introduction
 
 In today's interconnected world, ensuring data security is paramount. Online communications demand robust protection against eavesdropping and breaches of confidentiality. SSL/TLS (Secure Sockets Layer / Transport Layer Security) protocols and their derivatives, such as mTLS (mutual TLS), play a pivotal role in upholding security standards by providing authentication, confidentiality, and data integrity.
 
@@ -50,9 +50,9 @@ This tool, leveraging Ansible, offers a comprehensive solution for creating and 
 
 To use this tool, you'll need:
 
-- Ansible installed on your system.
-- A YAML input file with the desired certification architecture configuration (default is pki/CA_NAME/input.yml).
-- A root access / sudoer account.
+* Ansible installed on your system.
+* A YAML input file with the desired certification architecture configuration (default is pki/CA_NAME/input.yml).
+* A root access / sudoer account.
 
 ### Usage
 
@@ -77,11 +77,11 @@ To expedite certification as a service, add CICD vars in your pipeline:
 ${CICD_GPG_KEY} # GPG decryption of CA and CERTS private data
 ${CICD_ANSIBLE_VAULT_KEY} # Ansible input decryption
 #
-${NEXUS_ADDRESS_HTTPS} # Your remote address
-${NEXUS_CICD_REPOSITORY} # Your remote repository name/path
-${NEXUS_URL} # Concatened value for pushing
-${NEXUS_REPOS_USERNAME} # User for push operations
-${NEXUS_REPOS_PASSWORD} # User password
+${NEXUS_REPOSITORY_URL} # Your remote address
+${NEXUS_REPOSITORY_NAME} # Your remote repository name/path
+${NEXUS_REPOSITORY_URL} # Concatened value for pushing
+${GITLAB_CI_NEXUS_CREDENTIALS_USR} # User for push operations
+${GITLAB_CI_NEXUS_CREDENTIALS_PSW} # User password
 ```
 
 Masking vars in this manner facilitates their modification. More informations inside the GitLab CI file.
@@ -114,6 +114,14 @@ Here you can put your change to keep a trace of your work and decisions.
 * CICD contains now a "publish" stage, GitLab Release will be create on "main", and certificates will be publish on "main" to, based on timestamp
 * You can edit the CICD to change the publish output and set "latest" version for crypto material
 * CICD push to a private remote Nexus, so ${VERSION-TIMESTAMP} is used for identification
+
+### 2024-06-17: Reworks and automation
+
+* Repos now use custom genetation to create certification pipeline
+* Added detect secret to the CI
+* Added Mardown/YAML/Ansible/secret steps to the pipeline
+* Fixed and edited vars to follow new guidelines
+* Fix bundles and ZIP content to the crypt process
 
 ## Authors
 

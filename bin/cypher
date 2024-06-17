@@ -13,6 +13,7 @@ done
 # ENCRYPT ALL INPUT FILES WITH GPG
 for CURRENT_SSL_FOLDER in ./${SSL_FOLDER}/*; do
     if [ -d "${CURRENT_SSL_FOLDER}" ]; then
+        # Existing encryption for private files
         for PRIVATE in ${CURRENT_SSL_FOLDER}/private/*; do
             if [ -f "${PRIVATE}" ]; then
                 if [ "${PRIVATE: -4}" == ".gpg" ] || [[ "${PRIVATE}" == *"lock"* ]]; then
@@ -21,6 +22,26 @@ for CURRENT_SSL_FOLDER in ./${SSL_FOLDER}/*; do
                     gpg --batch --passphrase "${CYPHER_PASS}" -c --symmetric "${PRIVATE}" && rm "${PRIVATE}"
                     echo "ENCRYPTION: DONE: ${PRIVATE}"
                 fi
+            fi
+        done
+        
+        # Encrypt key files in bundle folders
+        for BUNDLE_FOLDER in ${CURRENT_SSL_FOLDER}/bundles/*; do
+            if [ -d "${BUNDLE_FOLDER}" ]; then
+                for KEY_FILE in ${BUNDLE_FOLDER}/*; do
+                    if [ -f "${KEY_FILE}" ] && [[ "${KEY_FILE}" == *.key ]]; then
+                        gpg --batch --passphrase "${CYPHER_PASS}" -c --symmetric "${KEY_FILE}" && rm "${KEY_FILE}"
+                        echo "ENCRYPTION: DONE: ${KEY_FILE}"
+                    fi
+                done
+            fi
+        done
+        
+        # Encrypt .zip files in bundle
+        for ZIP_FILE in ${CURRENT_SSL_FOLDER}/bundles/*.zip; do
+            if [ -f "${ZIP_FILE}" ]; then
+                gpg --batch --passphrase "${CYPHER_PASS}" -c --symmetric "${ZIP_FILE}" && rm "${ZIP_FILE}"
+                echo "ENCRYPTION: DONE: ${ZIP_FILE}"
             fi
         done
     fi

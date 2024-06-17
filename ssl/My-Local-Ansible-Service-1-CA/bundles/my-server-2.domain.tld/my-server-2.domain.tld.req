@@ -1,0 +1,29 @@
+##############################
+#                            #
+# Ansible / Tower managed on #
+#                            #
+##############################
+
+.include ./../../ssl/My-Local-Ansible-Service-1-CA/openssl.cnf
+
+[ req ]
+default_bits=4096
+prompt=no
+req_extensions=req_ext
+distinguished_name=dn
+#
+[ dn ]
+C=FR
+ST=state
+L=city
+O=Local Ansible
+OU=My Local Ansible Service 1 CA for Client
+emailAddress=administrateur@labo-cbz.net
+CN=my-server-2.domain.tld
+#
+[ req_ext ]
+subjectAltName=@alt_names
+#
+[ alt_names ]
+DNS.1=my-server-2.domain.tld
+DNS.2=10.125.1.111
