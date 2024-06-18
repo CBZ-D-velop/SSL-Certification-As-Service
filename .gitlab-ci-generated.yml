@@ -29,7 +29,7 @@ stages:
     - "DATE=$(date +%Y-%m-%d)"
     - "echo \"DATE=${DATE}\" > .nexus.env"
     - "echo \"NEXUS_REPOSITORY_NAME=${NEXUS_REPOSITORY_NAME}\" >> .nexus.env"
-    - "echo \"NEXUS_REPOSITORY_ADDRESSE=${NEXUS_REPOSITORY_URL}/repository/${DATE}/${NEXUS_REPOSITORY_NAME}\" >> .nexus.env"
+    - "echo \"NEXUS_REPOSITORY_ADDRESSE=${NEXUS_REPOSITORY_URL}/repository/${NEXUS_REPOSITORY_NAME}/${DATE}\" >> .nexus.env"
     - "echo \"NEXUS_CREDENTIALS_USR=${GITLAB_CI_NEXUS_CREDENTIALS_USR}\" >> .nexus.env"
     - "echo \"NEXUS_CREDENTIALS_PSW=${GITLAB_CI_NEXUS_CREDENTIALS_PSW}\" >> .nexus.env"
     #
