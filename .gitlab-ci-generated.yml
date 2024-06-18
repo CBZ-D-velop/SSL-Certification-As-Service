@@ -27,7 +27,7 @@ stages:
     - "cd ./bin && bash ./build && ./uncypher && cd .."
     #
     - "echo \"NEXUS_REPOSITORY_NAME=${NEXUS_REPOSITORY_NAME}\" >> .nexus.env"
-    - "echo \"NEXUS_REPOSITORY_ADDRESSE=${NEXUS_REPOSITORY_URL}/repository/${NEXUS_REPOSITORY_NAME}\" >> .nexus.env"
+    - "echo \"NEXUS_REPOSITORY_ADDRESSE=${NEXUS_REPOSITORY_URL}/repository/$(date +%Y-%m-%d)/${NEXUS_REPOSITORY_NAME}\" >> .nexus.env"
     - "echo \"NEXUS_CREDENTIALS_USR=${GITLAB_CI_NEXUS_CREDENTIALS_USR}\" >> .nexus.env"
     - "echo \"NEXUS_CREDENTIALS_PSW=${GITLAB_CI_NEXUS_CREDENTIALS_PSW}\" >> .nexus.env"
     #
